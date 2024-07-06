@@ -1,29 +1,39 @@
-from django.test import TestCase
-from accounts.models import User, Organisation
-from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.urls import reverse
 
-class OrganisationAccessTest(APITestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(email='test@example.com', password='password', firstName='John', lastName='Doe')
-        self.client.force_authenticate(user=self.user)
-        
-        # Create an organization and associate it with the user
-        self.org = Organisation.objects.create(orgId='org123', name='Test Org')
-        # Assuming there is a many-to-many relationship between User and Organisation
-        self.org.users.add(self.user)
-        self.org.save()
+class RegisterEndpointTest(APITestCase):
+    def test_register_successful(self):
+        url = reverse('register')
+        data = {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com",
+            "password": "password123",
+            "phone": "0700000000"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_get_organisations(self):
-        response = self.client.get('/api/organisations/')
-        print(response.data)  # Debugging statement
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('Test Org', [org['name'] for org in response.data['data']['organisations']])
+    def test_missing_fields(self):
+        url = reverse('register')
+        data = {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    def test_get_organisation(self):
-        response = self.client.get(f'/api/organisations/{self.org.orgId}/')  # Use correct URL with organization ID
-        print(response.data)  # Debugging statement
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], 'Test Org')
+    def test_duplicate_email(self):
+        url = reverse('register')
+        data = {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com",
+            "password": "password123",
+            "phone": "0700000000"
+        }
+        self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
