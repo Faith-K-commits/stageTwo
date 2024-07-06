@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
@@ -18,7 +19,7 @@ class UserManager(BaseUserManager):
 
     
 class User(AbstractBaseUser):
-    userId = models.CharField(max_length=255, unique=True)
+    userId = models.CharField(max_length=36, default=uuid.uuid4, editable=False, unique=True)
     firstName = models.CharField(max_length=255)
     lastName = models.CharField(max_length=255)
     email = models.EmailField(unique=True)

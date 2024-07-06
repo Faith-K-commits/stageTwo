@@ -1,10 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.test import TestCase
 from django.utils import timezone
-from accounts.models import User, Organisation
-from rest_framework.test import APIClient
-from rest_framework import status
+from accounts.models import User
 
 class TokenGenerationTest(TestCase):
     def setUp(self):

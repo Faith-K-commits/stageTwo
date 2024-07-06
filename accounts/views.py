@@ -11,9 +11,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 def register_user(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        user_data = serializer.data
-        refresh = RefreshToken.for_user(User.objects.get(email=user_data['email']))
+        user = serializer.save()
+        organisation = Organisation.objects.create(name="Default Organisation")
+        organisation.users.add(user)
+        organisation.save()
+
+        refresh = RefreshToken.for_user(user)
+        user_data = UserSerializer(user).data
         return Response({
             "status": "success",
             "message": "Registration successful",
@@ -22,7 +26,12 @@ def register_user(request):
                 "user": user_data
             }
         }, status=status.HTTP_201_CREATED)
-    return Response({"errors": serializer.errors}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    return Response({
+        "status": "Bad request",
+        "message": "Registration unsuccessful",
+        "statusCode": 400,
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def login_user(request):
